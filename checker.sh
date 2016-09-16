@@ -1,7 +1,7 @@
-#!/bin/bash
+!/bin/bash
 # Website status checker. by ET (etcs.me)
 
-WORKSPACE=/scripts/isOnline
+WORKSPACE=/root
 # list of websites. each website in new line. leave an empty line in the end.
 LISTFILE=$WORKSPACE/websites.lst
 # Send mail in case of failure to. leave an empty line in the end.
@@ -20,14 +20,27 @@ function test {
   if [ "$QUIET" = false ] ; then echo -n "$p "; fi
 
   if [ $response -eq 200 ] ; then
-    # website working
-    if [ "$QUIET" = false ] ; then
-      echo -n "$response "; echo -e "\e[32m[ok]\e[0m"
+    # remove .temp file if exist
+    if [ -f $TEMPDIR/$filename ]; then
+        # website recover
+        if [ "$QUIET" = false ] ; then
+           echo -n "$response "; echo -e "\e[33m[recovering]\e[0m"
+        fi
+        while read e; do
+            # using mailx command
+            echo "$p WEBSITE UP" | mailx -s "$1 WEBSITE UP ( $response )" $e
+            # using mail command
+            #mail -s "$p WEBSITE DOWN" "$EMAIL"
+        done < $EMAILLISTFILE
+        rm -f $TEMPDIR/$filename;
+    else
+       # website working
+       if [ "$QUIET" = false ] ; then
+         echo -n "$response "; echo -e "\e[32m[ok]\e[0m"
+       fi
     fi
-    # remove .temp file if exist 
-    if [ -f $TEMPDIR/$filename ]; then rm -f $TEMPDIR/$filename; fi
   else
-    # website down
+	# website down
     if [ "$QUIET" = false ] ; then echo -n "$response "; echo -e "\e[31m[DOWN]\e[0m"; fi
     if [ ! -f $TEMPDIR/$filename ]; then
         while read e; do
